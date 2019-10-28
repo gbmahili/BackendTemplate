@@ -42,7 +42,7 @@ router.post('/loginUser', function (req, res, next) {
 
     if (err) {
       console.log("Error: ", err);
-      res.status(400).json({ error: err.message});
+      res.status(400).json({ error: err.message });
     }
 
     if (!user) {
@@ -73,4 +73,28 @@ router.post('/loginUser', function (req, res, next) {
   })(req, res, next);
 });
 
+// Get list of users
+// Route: /user/getAllUsers
+// Params { Authorization with JWT Token }
+router.get('/getAllUsers', function (req, res, next) {
+  passport.authenticate('jwt', function (err, user, info) {
+    _respondToInvalidCredentials(res, user, err, next);
+    if (user.isActive) {
+      User.find({})
+        .then(allUsers => {
+          res.status(200).json(allUsers)
+        })
+        .catch(err => {
+          console.log('----- Error in /getAllUsers', err);
+          res.status(400).json({ error: 'Something went wrong trying to get all users' });
+        });
+    }
+  })(req, res, next);
+});
+
 module.exports = router;
+
+const _respondToInvalidCredentials = (res, user, err, next) => {
+  if (err) { return next(err); }
+  if (!user) { return res.status(401).json({ error: 'Invalid credentials.' }); }
+};
